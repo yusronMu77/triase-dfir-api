@@ -1,0 +1,6 @@
+[project]
+name = "astria-api"
+version = "0.0.0"
+description = "BFF /api/v1 untuk web: sesi, peran, agregasi."
+requires-python = ">=3.14"
+dependencies = []
