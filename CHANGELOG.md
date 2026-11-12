@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Bawaan `ASTRIA_GATEWAY_URL` menjadi `http://gateway:8080`: listener internal Gateway ada di 8080, sehingga probe kesehatan menandai gateway merah dan `/status` dari chat selalu "merah".
+
 ### Added
 
 - BFF `/api/v1` (42 operasi): sesi login/logout/reauth, antrean dan detail kartu (respons parsial), bukti, penjelas, ingest, kasus DFIR dan laporan, digest, serah terima, audit, metrik, konfigurasi dan rahasia, kanal, ikatan identitas, pindai perangkat; kontrak di `openapi/api-v1.json`.
