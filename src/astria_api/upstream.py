@@ -37,11 +37,16 @@ class Actor:
     sub: str
     roles: tuple[str, ...]
     session_id: str | None = None
+    reauth_at: str | None = None
+    """Waktu re-autentikasi sesi. identity mengisi ulang nilainya dari sesi; di sini hanya agar kunci cache token
+    layanan (per audiens dan `act`) berubah setelah reauth, sehingga aksi yang butuh reauth tidak memakai token basi."""
 
     def act(self) -> dict[str, Any]:
         act: dict[str, Any] = {"sub": self.sub, "roles": list(self.roles)}
         if self.session_id:
             act["session_id"] = self.session_id
+        if self.reauth_at:
+            act["reauth_at"] = self.reauth_at
         return act
 
 
