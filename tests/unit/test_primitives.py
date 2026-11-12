@@ -97,3 +97,14 @@ def test_mask_title() -> None:
     masked = sanitize.mask_title("Login mencurigakan di WS-ADM-04 dari 10.1.2.3")
     assert "10.1.2.3" not in masked
     assert "WS-ADM-04" not in masked
+
+
+def test_actor_act_carries_reauth_at_only_when_set() -> None:
+    """reauth_at ikut di `act` agar kunci cache token layanan berubah setelah reauth."""
+    from astria_api.upstream import Actor
+
+    bare = Actor(sub="usr_a", roles=("admin",), session_id="ses_1")
+    assert "reauth_at" not in bare.act()
+    fresh = Actor(sub="usr_a", roles=("admin",), session_id="ses_1", reauth_at="2026-11-12T06:17:08Z")
+    assert fresh.act()["reauth_at"] == "2026-11-12T06:17:08Z"
+    assert fresh.act() != bare.act()

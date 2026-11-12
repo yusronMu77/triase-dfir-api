@@ -43,7 +43,7 @@ class Session:
 
     @property
     def actor(self) -> Actor:
-        return Actor(sub=self.user_id, roles=self.roles, session_id=self.session_id)
+        return Actor(sub=self.user_id, roles=self.roles, session_id=self.session_id, reauth_at=self.reauth_at)
 
 
 class SessionStore:
