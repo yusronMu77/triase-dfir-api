@@ -33,7 +33,8 @@ class Settings(AstriaSettings):
     scheduler_url: str = "http://scheduler:8000"
     narrative_url: str = "http://narrative:8000"
     verifier_url: str = "http://verifier:8000"
-    gateway_url: str = "http://gateway:8000"
+    gateway_url: str = "http://gateway:8080"
+    """Listener internal Gateway (A10) di 8080 (Dockerfile gateway, GW bagian 3.1), bukan 8000 seperti layanan inti."""
 
     upstream_timeout_seconds: float = 2.0
     cache_session_seconds: float = 5.0
