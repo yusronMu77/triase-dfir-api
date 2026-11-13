@@ -52,7 +52,7 @@ SPECS = [
         Perm.CARDS_WRITE,
         "ticket",
         "/svc/v1/tickets/{card_id}/feedback",
-        "Umpan balik analis",
+        "Feedback analis",
         body=True,
     ),
     ProxySpec(
