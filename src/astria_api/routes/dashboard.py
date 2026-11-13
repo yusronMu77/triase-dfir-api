@@ -219,6 +219,24 @@ SPECS = [
         audit_target="channel",
     ),
     ProxySpec(
+        "GET",
+        "/channels/whatsapp/link",
+        Perm.CHANNELS_ADMIN,
+        "gateway",
+        "/internal/v1/whatsapp/link",
+        "Status tautan bot WhatsApp dan QR untuk dipindai",
+    ),
+    ProxySpec(
+        "POST",
+        "/channels/whatsapp/link/logout",
+        Perm.CHANNELS_ADMIN,
+        "gateway",
+        "/internal/v1/whatsapp/link/logout",
+        "Putuskan tautan bot WhatsApp",
+        audit="channel.whatsapp_unlink",
+        audit_target="channel",
+    ),
+    ProxySpec(
         "GET", "/outbox", Perm.CHANNELS_ADMIN, "gateway", "/internal/v1/outbox", "Log pengiriman", query=("status",)
     ),
     ProxySpec(

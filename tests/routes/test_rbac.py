@@ -53,6 +53,8 @@ EXPECTED: dict[tuple[str, str], set[str]] = {
     ("GET", "/api/v1/channels"): AD,
     ("PUT", "/api/v1/channels/{channel_id}"): AD,
     ("POST", "/api/v1/channels/{channel_id}/test"): AD,
+    ("GET", "/api/v1/channels/whatsapp/link"): AD,
+    ("POST", "/api/v1/channels/whatsapp/link/logout"): AD,
     ("GET", "/api/v1/outbox"): AD,
     ("POST", "/api/v1/outbox/{outbox_id}/retry"): AD,
     ("POST", "/api/v1/identities/pairing-codes"): ALL,
