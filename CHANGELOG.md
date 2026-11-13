@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Ringkasan operasi `POST /api/v1/cards/{card_id}/feedback` menjadi "Feedback analis" (sebelumnya "Umpan balik analis"); `openapi/api-v1.json` diperbarui. Hanya teks.
+
 ### Fixed
 
 - Bawaan `ASTRIA_GATEWAY_URL` menjadi `http://gateway:8080`: listener internal Gateway ada di 8080, sehingga probe kesehatan menandai gateway merah dan `/status` dari chat selalu "merah".

@@ -1642,7 +1642,7 @@
             "description": "Layanan tujuan tidak tersedia"
           }
         },
-        "summary": "Umpan balik analis"
+        "summary": "Feedback analis"
       }
     },
     "/api/v1/cases/{case_id}": {
