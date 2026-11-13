@@ -1989,6 +1989,118 @@
         ]
       }
     },
+    "/api/v1/channels/whatsapp/link": {
+      "get": {
+        "operationId": "get_channels_whatsapp_link_api_v1_channels_whatsapp_link_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Sesi tidak ada atau berakhir"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Peran tidak diizinkan"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Terlalu banyak permintaan"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Layanan tujuan tidak tersedia"
+          }
+        },
+        "summary": "Status tautan bot WhatsApp dan QR untuk dipindai"
+      }
+    },
+    "/api/v1/channels/whatsapp/link/logout": {
+      "post": {
+        "operationId": "post_channels_whatsapp_link_logout_api_v1_channels_whatsapp_link_logout_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Sesi tidak ada atau berakhir"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Peran tidak diizinkan"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Terlalu banyak permintaan"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Layanan tujuan tidak tersedia"
+          }
+        },
+        "summary": "Putuskan tautan bot WhatsApp"
+      }
+    },
     "/api/v1/channels/{channel_id}": {
       "put": {
         "operationId": "put_channels_channel_id_api_v1_channels__channel_id__put",
