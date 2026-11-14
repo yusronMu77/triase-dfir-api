@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 import httpx
+import pytest
 
 TICKET = {
     "card_id": "IC-20261110-003",
@@ -118,7 +119,7 @@ def test_custody_is_proxied_unchanged_from_dfir(env: Any) -> None:
 
 
 def test_ingest_validates_and_rejects_traversal(env: Any) -> None:
-    env.world.on("ingest", "POST", "/svc/v1/ingest/jobs", json={"job_id": "j1"}, status=202)
+    env.world.on("ingest", "POST", "/svc/v1/imports", json={"job_id": "j1"}, status=202)
     bad = [
         {"adapter": "hayabusa", "path_ref": "../../etc/passwd"},
         {"adapter": "Hay abusa", "path_ref": "x"},
@@ -130,6 +131,71 @@ def test_ingest_validates_and_rejects_traversal(env: Any) -> None:
     assert env.world.calls_to("ingest") == []
     ok = env.write("POST", "/api/v1/ingest", "tok-analis", json={"adapter": "hayabusa", "path_ref": "inbox/a.jsonl"})
     assert ok.status_code == 202 and ok.json() == {"job_id": "j1"}
+
+
+INGEST_JOB = {
+    "job_id": "ING-20261115-0A1B2C3D",
+    "source_id": "hb01",
+    "file_sha256": "a" * 64,
+    "status": "queued",
+    "created": True,
+    "stats": {"total_lines": 31, "valid": 31, "blank": 0, "rejected": 0, "error_samples": []},
+}
+
+
+def test_ingest_uses_ingest_imports_contract(env: Any) -> None:
+    """api#12: rute dan field ingest yang benar (`POST /svc/v1/imports`, `expected_sha256` diteruskan)."""
+    env.world.on("ingest", "POST", "/svc/v1/imports", json=INGEST_JOB, status=202)
+    body = {"adapter": "hayabusa", "path_ref": "chains/svc-backup.jsonl", "expected_sha256": "a" * 64}
+    response = env.write("POST", "/api/v1/ingest", "tok-analis", json=body)
+    assert response.status_code == 202
+    assert response.json() == INGEST_JOB
+    (call,) = env.world.calls_to("ingest")
+    assert (call.method, call.path, call.body) == ("POST", "/svc/v1/imports", body)
+
+
+def test_ingest_already_imported_returns_200_with_existing_job(env: Any) -> None:
+    existing = {**INGEST_JOB, "status": "completed", "created": False}
+    env.world.on("ingest", "POST", "/svc/v1/imports", json=existing, status=200)
+    response = env.write("POST", "/api/v1/ingest", "tok-analis", json={"adapter": "hayabusa", "path_ref": "a.jsonl"})
+    assert response.status_code == 200
+    assert response.json()["created"] is False
+
+
+@pytest.mark.parametrize(
+    ("status", "code", "message"),
+    [
+        (422, "PATH_TIDAK_ADA", "File tidak ada di folder impor server."),
+        (422, "SHA256_TIDAK_COCOK", "SHA-256 file tidak sama dengan yang diharapkan."),
+        (413, "BERKAS_TERLALU_BESAR", "File melebihi batas ukuran impor."),
+    ],
+)
+def test_ingest_rejection_keeps_known_code_with_api_message(env: Any, status: int, code: str, message: str) -> None:
+    upstream = {"error": {"code": code, "message": "/data/import/rahasia: detail internal", "trace_id": "t"}}
+    env.world.on("ingest", "POST", "/svc/v1/imports", json=upstream, status=status)
+    response = env.write("POST", "/api/v1/ingest", "tok-analis", json={"adapter": "hayabusa", "path_ref": "a.jsonl"})
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == code
+    assert response.json()["error"]["message"] == message
+    assert "/data/import" not in response.text
+
+
+def test_ingest_unknown_rejection_code_is_generic_validation(env: Any) -> None:
+    upstream = {"error": {"code": "KODE_BARU", "message": "detail internal"}}
+    env.world.on("ingest", "POST", "/svc/v1/imports", json=upstream, status=422)
+    response = env.write("POST", "/api/v1/ingest", "tok-analis", json={"adapter": "hayabusa", "path_ref": "a.jsonl"})
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "VALIDASI_GAGAL"
+    assert "detail internal" not in response.text
+
+
+def test_ingest_job_status_reads_ingest_imports(env: Any) -> None:
+    job = {**INGEST_JOB, "status": "completed", "last_record_no": 31, "error_code": None}
+    env.world.on("ingest", "GET", "/svc/v1/imports/ING-20261115-0A1B2C3D", json=job)
+    response = env.as_user("tok-analis").get("/api/v1/ingest/jobs/ING-20261115-0A1B2C3D")
+    assert response.status_code == 200
+    assert response.json() == job
+    assert env.world.calls_to("ingest")[0].path == "/svc/v1/imports/ING-20261115-0A1B2C3D"
 
 
 def test_report_passes_binary_through_with_upstream_content_type(env: Any) -> None:
