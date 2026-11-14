@@ -65,11 +65,20 @@ def test_evidence_collects_ids_and_reports_missing(env: Any) -> None:
         "ingest",
         "POST",
         "/svc/v1/evidence:batch",
-        json={"evidence": [{"evidence_id": "EV-hb01-004217", "sha256": "ab"}]},
+        # Bentuk balasan ingest yang sebenarnya (`EvidenceBatchResponse`).
+        json={"items": [{"evidence_id": "EV-hb01-004217", "record_sha256": "ab"}], "not_found": ["EV-hb01-004218"]},
     )
     body = env.as_user("tok-dfir").get("/api/v1/cards/IC-1/evidence").json()
+    assert [i["evidence_id"] for i in body["evidence"]] == ["EV-hb01-004217"]
     assert body["tidak_ditemukan"] == ["EV-hb01-004218"]
     assert env.world.calls_to("ingest")[0].body == {"ids": ["EV-hb01-004217", "EV-hb01-004218"]}
+
+
+def test_evidence_with_unexpected_ingest_shape_is_upstream_error(env: Any) -> None:
+    env.world.on("ticket", "GET", "/svc/v1/tickets/IC-1", json=TICKET)
+    env.world.on("ingest", "POST", "/svc/v1/evidence:batch", json={"evidence": []})
+    response = env.as_user("tok-dfir").get("/api/v1/cards/IC-1/evidence")
+    assert response.status_code == 502
 
 
 def test_explain_unknown_alert_is_404_and_known_one_resolves_rule(env: Any) -> None:
@@ -93,6 +102,19 @@ def test_deep_dive_builds_body_from_path_only(env: Any) -> None:
     response = env.write("POST", "/api/v1/cards/IC-1/deep-dive", "tok-dfir", json={"card_id": "IC-LAIN", "x": 1})
     assert response.status_code == 202
     assert env.world.calls_to("dfir")[0].body == {"card_id": "IC-1"}
+
+
+def test_custody_is_proxied_unchanged_from_dfir(env: Any) -> None:
+    custody = {
+        "case_id": "CS-1",
+        "entries": [{"seq": 1, "action": "KASUS_DIBUKA", "prev_hash": "", "entry_hash": "aa"}],
+        "chain_ok": False,
+    }
+    env.world.on("dfir", "GET", "/internal/v1/cases/CS-1/custody", json=custody)
+    response = env.as_user("tok-dfir").get("/api/v1/cases/CS-1/custody")
+    assert response.status_code == 200
+    assert response.json() == custody
+    assert env.world.calls_to("dfir")[0].path == "/internal/v1/cases/CS-1/custody"
 
 
 def test_ingest_validates_and_rejects_traversal(env: Any) -> None:

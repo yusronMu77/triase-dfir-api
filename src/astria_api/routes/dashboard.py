@@ -80,6 +80,14 @@ SPECS = [
     ),
     ProxySpec(
         "GET",
+        "/cases/{case_id}/custody",
+        Perm.CASES_READ,
+        "dfir",
+        "/internal/v1/cases/{case_id}/custody",
+        "Rantai custody berhash dan hasil cek keutuhan (chain_ok dihitung dfir)",
+    ),
+    ProxySpec(
+        "GET",
         "/cases/{case_id}/report",
         Perm.CASES_READ,
         "dfir",

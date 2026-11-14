@@ -143,7 +143,8 @@ async def card_evidence(upstreams: Upstreams, actor: Actor, card_id: str) -> dic
     items: list[Any] = []
     if ids:
         data = await upstreams.ingest.json("POST", "/svc/v1/evidence:batch", actor=actor, json={"ids": ids})
-        items = data.get("evidence", []) if isinstance(data, dict) else []
+        # Kontrak ingest `EvidenceBatchResponse`: `items` dan `not_found`. Bentuk lain = hulu rusak, bukan "tidak ada".
+        items = data.get("items") if isinstance(data, dict) else None
         if not isinstance(items, list):
             raise upstream_failed("ingest")
     found = {i.get("evidence_id") for i in items if isinstance(i, dict)}
