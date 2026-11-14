@@ -30,7 +30,7 @@ EXPECTED: dict[Perm, set[str]] = {
     Perm.DIGESTS_RUN: {"admin"},
     Perm.HANDOVER: {"analis"},
     Perm.AUDIT_READ: {"dfir", "admin"},
-    Perm.AUDIT_VERIFY: {"dfir", "admin"},
+    Perm.AUDIT_VERIFY: {"admin"},
     Perm.METRICS_READ: {"analis", "admin"},
     Perm.CONFIG_READ: {"admin"},
     Perm.CONFIG_WRITE: {"admin"},
