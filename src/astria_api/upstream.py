@@ -50,7 +50,7 @@ class Actor:
         return act
 
 
-def _upstream_code(resp: httpx.Response) -> str | None:
+def upstream_code(resp: httpx.Response) -> str | None:
     try:
         code = resp.json()["error"]["code"]
     except ValueError, KeyError, TypeError:
@@ -68,7 +68,7 @@ def map_status(service: str, resp: httpx.Response) -> ApiError:
     if status == 404:
         return ApiError("TIDAK_DITEMUKAN", "data tidak ditemukan", 404)
     if status == 409:
-        return ApiError(_upstream_code(resp) or "KONFLIK", "data berubah atau konflik; muat ulang", 409)
+        return ApiError(upstream_code(resp) or "KONFLIK", "data berubah atau konflik; muat ulang", 409)
     if status == 410:
         return ApiError("KEDALUWARSA", "sudah kedaluwarsa", 410)
     if status == 429:

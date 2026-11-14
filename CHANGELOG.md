@@ -8,6 +8,7 @@
 
 ### Fixed
 
+- api#12: impor alert dari web tidak pernah selesai. `POST /api/v1/ingest` kini memanggil ingest `POST /svc/v1/imports` (sebelumnya `/svc/v1/ingest/jobs` yang tidak ada) dan `GET /api/v1/ingest/jobs/{job_id}` membaca `GET /svc/v1/imports/{job_id}`, sesuai `contracts/openapi/ingest-internal.yaml`. Berkas yang sudah diimpor dijawab 200 dengan job lama (`created: false`). Kode tolak ingest yang dikenal (mis. `PATH_TIDAK_ADA`, `SHA256_TIDAK_COCOK`, `BERKAS_TERLALU_BESAR`) diteruskan sebagai 422 dengan pesan milik api; kode lain tetap 400 `VALIDASI_GAGAL`, detail server tidak diteruskan. `openapi/api-v1.json` diperbarui.
 - `GET /api/v1/cards/{card_id}/evidence` menandai semua bukti "tidak ditemukan": api membaca kunci `evidence`, padahal ingest `POST /svc/v1/evidence:batch` membalas `items` dan `not_found`. Kini membaca `items`; bentuk lain dijawab 502 (hulu rusak), bukan daftar kosong.
 - Bawaan `ASTRIA_GATEWAY_URL` menjadi `http://gateway:8080`: listener internal Gateway ada di 8080, sehingga probe kesehatan menandai gateway merah dan `/status` dari chat selalu "merah".
 

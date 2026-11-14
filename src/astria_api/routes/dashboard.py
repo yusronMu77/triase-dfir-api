@@ -19,6 +19,7 @@ from astria_api.auth import Session, authorize
 from astria_api.errors import ERROR_RESPONSES, ApiError, upstream_failed
 from astria_api.permissions import Perm, can_manage_identity
 from astria_api.routing import SAFE_ID, ProxySpec, add_proxies
+from astria_api.upstream import upstream_code
 
 router = APIRouter(responses=ERROR_RESPONSES)
 
@@ -97,9 +98,7 @@ SPECS = [
         raw=True,
     ),
     # --- ingest dan pindai perangkat ---
-    ProxySpec(
-        "GET", "/ingest/jobs/{job_id}", Perm.INGEST_READ, "ingest", "/svc/v1/ingest/jobs/{job_id}", "Status ingest"
-    ),
+    ProxySpec("GET", "/ingest/jobs/{job_id}", Perm.INGEST_READ, "ingest", "/svc/v1/imports/{job_id}", "Status ingest"),
     ProxySpec(
         "POST",
         "/device-scans",
@@ -321,16 +320,53 @@ class IngestRequest(BaseModel):
         return value
 
 
-@router.post("/ingest", status_code=202, summary="Mulai ingest dari path yang diizinkan", tags=["ingest"])
+INGEST_REJECTIONS: dict[str, str] = {
+    "PATH_TIDAK_VALID": "Path file tidak valid.",
+    "PATH_TIDAK_ADA": "File tidak ada di folder impor server.",
+    "PATH_SYMLINK": "Path tidak boleh berupa symlink.",
+    "PATH_BUKAN_BERKAS": "Path menunjuk folder, bukan file.",
+    "PATH_DI_LUAR_ROOT": "Path berada di luar folder impor server.",
+    "BERKAS_TERLALU_BESAR": "File melebihi batas ukuran impor.",
+    "BERKAS_TIDAK_TERBACA": "File tidak dapat dibaca layanan ingest.",
+    "BERKAS_BERUBAH": "File berubah saat dibaca. Coba lagi.",
+    "SHA256_TIDAK_COCOK": "SHA-256 file tidak sama dengan yang diharapkan.",
+    "FORMAT_TIDAK_VALID": "Isi file bukan JSONL Hayabusa yang sah.",
+    "ENCODING_TIDAK_DIDUKUNG": "Encoding file tidak didukung (harus UTF-8).",
+    "TERLALU_BANYAK_BARIS": "File melebihi batas jumlah baris.",
+    "ADAPTER_TIDAK_DIKENAL": "Adapter tidak dikenal layanan ingest.",
+}
+"""Kode tolak impor dari ingest (`POST /svc/v1/imports`, 413/422) yang aman diteruskan, dengan pesan tetap milik api."""
+
+
+@router.post(
+    "/ingest",
+    status_code=202,
+    summary="Mulai ingest dari path yang diizinkan",
+    tags=["ingest"],
+    responses={200: {"description": "File yang sama sudah pernah diimpor; job lama dikembalikan (`created: false`)"}},
+)
 async def start_ingest(
     body: IngestRequest,
     request: Request,
     session: Annotated[Session, Depends(authorize(Perm.INGEST_WRITE))],
 ) -> JSONResponse:
     resp = await request.app.state.upstreams.ingest.send(
-        "POST", "/svc/v1/ingest/jobs", actor=session.actor, json=body.model_dump(exclude_none=True)
+        "POST",
+        "/svc/v1/imports",
+        actor=session.actor,
+        json=body.model_dump(exclude_none=True),
+        ok_statuses=frozenset({413, 422}),
     )
-    return JSONResponse(resp.json() if resp.content else {}, status_code=202)
+    if resp.status_code in (413, 422):
+        code = upstream_code(resp)
+        if code in INGEST_REJECTIONS:
+            raise ApiError(code, INGEST_REJECTIONS[code], 422)
+        raise ApiError("VALIDASI_GAGAL", "permintaan tidak valid", 400)
+    try:
+        data = resp.json()
+    except ValueError:
+        raise upstream_failed("ingest") from None
+    return JSONResponse(data, status_code=200 if resp.status_code == 200 else 202)
 
 
 # --- kanal: kebijakan (config) + status (gateway) ---
