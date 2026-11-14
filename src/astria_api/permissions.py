@@ -66,7 +66,7 @@ GRANTS: dict[Role, frozenset[Perm]] = {
         Perm.METRICS_READ,
         Perm.DEVICE_SCANS,
     },
-    # Dfir: seperti analis, plus kasus dan audit; tanpa unggah ingest, serah terima, metrik, dan pindai perangkat.
+    # Dfir: kasus dan baca audit; tanpa verifikasi audit, unggah ingest, serah terima, metrik, dan pindai perangkat.
     Role.DFIR: _EVERY_ROLE
     | {
         Perm.CARDS_READ,
@@ -74,7 +74,6 @@ GRANTS: dict[Role, frozenset[Perm]] = {
         Perm.CARDS_DEEP_DIVE,
         Perm.CASES_READ,
         Perm.AUDIT_READ,
-        Perm.AUDIT_VERIFY,
     },
     # Admin: konfigurasi, kanal, audit, metrik, ingest; sengaja tanpa antrean kartu, kasus, dan serah terima.
     Role.ADMIN: _EVERY_ROLE
