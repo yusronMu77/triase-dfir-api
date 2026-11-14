@@ -1723,6 +1723,84 @@
         "summary": "Status dan ringkasan kasus"
       }
     },
+    "/api/v1/cases/{case_id}/custody": {
+      "get": {
+        "operationId": "get_cases_case_id_custody_api_v1_cases__case_id__custody_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$",
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Sesi tidak ada atau berakhir"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Peran tidak diizinkan"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Terlalu banyak permintaan"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Layanan tujuan tidak tersedia"
+          }
+        },
+        "summary": "Rantai custody berhash dan hasil cek keutuhan (chain_ok dihitung dfir)"
+      }
+    },
     "/api/v1/cases/{case_id}/report": {
       "get": {
         "operationId": "get_cases_case_id_report_api_v1_cases__case_id__report_get",

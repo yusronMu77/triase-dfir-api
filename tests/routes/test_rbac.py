@@ -31,6 +31,7 @@ EXPECTED: dict[tuple[str, str], set[str]] = {
     ("GET", "/api/v1/alerts/{alert_id}/explain"): AN | DF,
     ("GET", "/api/v1/cases/{case_id}"): DF,
     ("GET", "/api/v1/cases/{case_id}/timeline"): DF,
+    ("GET", "/api/v1/cases/{case_id}/custody"): DF,
     ("GET", "/api/v1/cases/{case_id}/report"): DF,
     ("POST", "/api/v1/ingest"): AN | AD,
     ("GET", "/api/v1/ingest/jobs/{job_id}"): AN | AD,
