@@ -112,7 +112,17 @@ async def card_detail(upstreams: Upstreams, cache: ConfigCache, actor: Actor, ca
     elif isinstance(catalog, BaseException):
         raise catalog
     rule_ids = ticket.get("rule_ids")
+    if catalog and not rule_ids:
+        # Ticket belum membawa RuleID (kode kartu triage belum memuatnya): turunkan dari alert pada bukti kartu.
+        try:
+            rule_ids = card_rule_ids(await evidence_items(upstreams, actor, evidence_ids(ticket)))
+        except ApiError:
+            missing.append("penjelas")
+            PARTIAL.labels("penjelas").inc()
+            catalog = None
     result = dict(ticket)
+    if catalog and isinstance(rule_ids, list):
+        result["rule_ids"] = rule_ids
     result["penjelas"] = penjelas_for(catalog, rule_ids) if catalog and isinstance(rule_ids, list) else None
     result["katalog"] = katalog_meta(catalog)
     result["bagian_tidak_tersedia"] = missing
@@ -140,15 +150,25 @@ async def card_evidence(upstreams: Upstreams, actor: Actor, card_id: str) -> dic
     if not isinstance(ticket, dict):
         raise upstream_failed("ticket")
     ids = evidence_ids(ticket)
-    items: list[Any] = []
-    if ids:
-        data = await upstreams.ingest.json("POST", "/svc/v1/evidence:batch", actor=actor, json={"ids": ids})
-        # Kontrak ingest `EvidenceBatchResponse`: `items` dan `not_found`. Bentuk lain = hulu rusak, bukan "tidak ada".
-        items = data.get("items") if isinstance(data, dict) else None
-        if not isinstance(items, list):
-            raise upstream_failed("ingest")
+    items = await evidence_items(upstreams, actor, ids)
     found = {i.get("evidence_id") for i in items if isinstance(i, dict)}
     return {"card_id": card_id, "evidence": items, "tidak_ditemukan": [i for i in ids if i not in found]}
+
+
+async def evidence_items(upstreams: Upstreams, actor: Actor, ids: list[str]) -> list[Any]:
+    if not ids:
+        return []
+    data = await upstreams.ingest.json("POST", "/svc/v1/evidence:batch", actor=actor, json={"ids": ids})
+    # Kontrak ingest `EvidenceBatchResponse`: `items` dan `not_found`. Bentuk lain = hulu rusak, bukan "tidak ada".
+    items = data.get("items") if isinstance(data, dict) else None
+    if not isinstance(items, list):
+        raise upstream_failed("ingest")
+    return items
+
+
+def card_rule_ids(items: list[Any]) -> list[str]:
+    """RuleID unik dari item bukti ingest, huruf kecil seperti kunci katalog `alert_penjelasan`."""
+    return sorted({i["rule_id"].lower() for i in items if isinstance(i, dict) and isinstance(i.get("rule_id"), str)})
 
 
 async def alert_explain(upstreams: Upstreams, cache: ConfigCache, actor: Actor, alert_id: str) -> dict[str, Any]:

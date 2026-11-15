@@ -41,6 +41,50 @@ def test_card_detail_survives_config_outage(env: Any) -> None:
     assert body["card_id"] == "IC-20261110-003"
 
 
+TICKET_TANPA_RULE = {**TICKET, "rule_ids": []}
+CATALOG_UUID = {
+    "catalog_version": 1,
+    "content_hash": "def",
+    "entries": {"aa-11": {"judul": "Logon jaringan"}, "bb-22": {"judul": "Share admin"}},
+}
+
+
+def test_card_detail_derives_rule_ids_from_evidence_when_ticket_has_none(env: Any) -> None:
+    env.world.on("ticket", "GET", "/svc/v1/tickets/IC-1", json=TICKET_TANPA_RULE)
+    env.world.on("config", "GET", "/svc/v1/catalogs/alert_penjelasan/active", json=CATALOG_UUID)
+    items = [
+        {"evidence_id": "EV-hb01-004217", "rule_id": "AA-11"},
+        {"evidence_id": "EV-hb01-004218", "rule_id": "aa-11"},
+        {"evidence_id": "EV-hb01-004219", "rule_id": None},
+        {"evidence_id": "EV-hb01-004220", "rule_id": "cc-33"},
+    ]
+    env.world.on("ingest", "POST", "/svc/v1/evidence:batch", json={"items": items, "not_found": []})
+    body = env.as_user("tok-analis").get("/api/v1/cards/IC-1").json()
+    assert body["rule_ids"] == ["aa-11", "cc-33"]
+    assert body["penjelas"] == {"aa-11": {"judul": "Logon jaringan"}}
+    assert body["bagian_tidak_tersedia"] == []
+    assert env.world.calls_to("ingest")[0].body == {"ids": ["EV-hb01-004217", "EV-hb01-004218"]}
+
+
+def test_card_detail_survives_ingest_outage_when_deriving_rule_ids(env: Any) -> None:
+    env.world.on("ticket", "GET", "/svc/v1/tickets/IC-1", json=TICKET_TANPA_RULE)
+    env.world.on("config", "GET", "/svc/v1/catalogs/alert_penjelasan/active", json=CATALOG_UUID)
+    env.world.on("ingest", "POST", "/svc/v1/evidence:batch", exc=httpx.ConnectError("mati"))
+    response = env.as_user("tok-analis").get("/api/v1/cards/IC-1")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["bagian_tidak_tersedia"] == ["penjelas"] and body["penjelas"] is None
+    assert body["rule_ids"] == []
+
+
+def test_card_detail_without_evidence_does_not_call_ingest(env: Any) -> None:
+    env.world.on("ticket", "GET", "/svc/v1/tickets/IC-1", json={"card_id": "IC-1", "rule_ids": [], "dokumen": {}})
+    env.world.on("config", "GET", "/svc/v1/catalogs/alert_penjelasan/active", json=CATALOG_UUID)
+    body = env.as_user("tok-analis").get("/api/v1/cards/IC-1").json()
+    assert body["penjelas"] == {} and body["bagian_tidak_tersedia"] == []
+    assert env.world.calls_to("ingest") == []
+
+
 def test_card_detail_fails_when_ticket_is_down(env: Any) -> None:
     env.world.on("ticket", "GET", "/svc/v1/tickets/IC-1", exc=httpx.ConnectError("mati"))
     env.world.on("config", "GET", "/svc/v1/catalogs/alert_penjelasan/active", json=CATALOG)
