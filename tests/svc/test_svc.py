@@ -162,6 +162,14 @@ def test_role_is_checked_per_command_against_identity_without_cache(env: Any) ->
     assert len([c for c in env.world.calls_to("identity") if "/users/" in c.path]) == 3
 
 
+def test_admin_reads_queue_by_chat_but_cannot_write(env: Any) -> None:
+    setup(env)
+    env.world.on("ticket", "GET", "/svc/v1/tickets", json={"items": []})
+    assert post(env, CMD, command("queue", user="usr_adm")).status_code == 200
+    denied = post(env, CMD, command("feedback", {"card_id": CARD, "label": "benar"}, user="usr_adm", key="k2"))
+    assert denied.status_code == 403
+
+
 def test_inactive_unknown_user_and_inactive_channel_are_denied_and_audited(env: Any) -> None:
     setup(env)
     assert post(env, CMD, command("queue", user="usr_off")).status_code == 403
@@ -301,7 +309,7 @@ def test_command_rate_limits_per_user_and_global(tmp_path: Any) -> None:
     codes = [post(env, CMD, command("queue", key=f"k{i}")).status_code for i in range(3)]
     assert codes == [200, 200, 429]
     assert (
-        post(env, CMD, command("queue", user="usr_adm", key="z")).status_code == 403
+        post(env, CMD, command("queue", user="usr_pim", key="z")).status_code == 403
     )  # pengguna lain terpisah (peran salah)
 
 

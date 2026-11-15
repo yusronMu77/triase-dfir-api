@@ -90,6 +90,11 @@ def test_command_catalog_roles() -> None:
     assert not command_allowed(["analis"], "digest_run")
     assert command_allowed(["admin"], "digest_run")
     assert not command_allowed(["admin"], "feedback")
+    assert not command_allowed(["admin"], "deep_dive")
+    for read_only in ("queue", "card", "evidence_meta"):
+        assert command_allowed(["admin"], read_only)
+        assert COMMAND_ROLES[read_only][0] == "T0"
+    assert not command_allowed(["pimpinan"], "card")
     assert not command_allowed(["analis"], "tidak_ada")
     assert not command_allowed([], "status")
     assert COMMAND_ROLES["digest_run"][0] == "T2"
