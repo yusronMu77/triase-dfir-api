@@ -105,9 +105,10 @@ EVENT_PERMS: dict[str, Perm] = {
 ALL_BOUND = frozenset(Role)
 COMMAND_ROLES: dict[str, tuple[str, frozenset[Role]]] = {
     "status": ("T0", ALL_BOUND),
-    "queue": ("T0", frozenset({Role.ANALIS, Role.DFIR})),
-    "card": ("T0", frozenset({Role.ANALIS, Role.DFIR})),
-    "evidence_meta": ("T0", frozenset({Role.ANALIS, Role.DFIR})),
+    # Admin menautkan bot dan menerima notifikasi kartu, jadi boleh membaca ringkasannya lewat chat (T0, baca saja).
+    "queue": ("T0", frozenset({Role.ANALIS, Role.DFIR, Role.ADMIN})),
+    "card": ("T0", frozenset({Role.ANALIS, Role.DFIR, Role.ADMIN})),
+    "evidence_meta": ("T0", frozenset({Role.ANALIS, Role.DFIR, Role.ADMIN})),
     "digest_latest": ("T0", ALL_BOUND),
     "handover": ("T0", frozenset({Role.ANALIS})),
     "feedback": ("T1", frozenset({Role.ANALIS, Role.DFIR})),

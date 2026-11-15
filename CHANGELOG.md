@@ -4,6 +4,7 @@
 
 ### Changed
 
+- Perintah chat baca `queue`, `card`, dan `evidence_meta` (T0) kini juga untuk admin: admin menautkan bot dan menerima notifikasi kartu, jadi bisa membaca ringkasannya lewat WhatsApp. Perintah tulis (`feedback`, `deep_dive`) dan izin web admin tidak berubah.
 - Ringkasan operasi `POST /api/v1/cards/{card_id}/feedback` menjadi "Feedback analis" (sebelumnya "Umpan balik analis"); `openapi/api-v1.json` diperbarui. Hanya teks.
 
 ### Fixed
